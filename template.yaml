@@ -1,0 +1,110 @@
+# Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: MIT-0
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: SAM configuration for cloudfront-auth function
+Parameters: 
+    BucketName:
+        Type: String
+        Default: 'cl-bucket-2232'
+Resources:
+
+    S3Bucket:
+        Type: 'AWS::S3::Bucket'
+        Properties:
+            BucketName: !Ref BucketName
+      # Configure the bucket as a CloudFront Origin
+    ReadPolicy:
+     Type: 'AWS::S3::BucketPolicy'
+     Properties:
+        Bucket: !Ref S3Bucket
+        PolicyDocument:
+         Statement:
+         - Action: 's3:GetObject'
+           Effect: Allow
+           Resource: !Sub 'arn:aws:s3:::${S3Bucket}/*'
+           Principal:
+             CanonicalUser: !GetAtt CloudFrontOriginAccessIdentity.S3CanonicalUserId
+    CloudFrontOriginAccessIdentity:
+     Type: 'AWS::CloudFront::CloudFrontOriginAccessIdentity'
+     Properties:
+        CloudFrontOriginAccessIdentityConfig:
+         Comment: !Ref S3Bucket
+    CFDistribution:
+        Type: AWS::CloudFront::Distribution
+        Properties:
+          DistributionConfig:
+            Enabled: 'true'
+            Origins:
+            - DomainName: !GetAtt S3Bucket.DomainName
+              Id: myS3Origin
+              S3OriginConfig:
+                OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}'
+            Enabled: 'true'
+            Comment: Some comment
+            DefaultRootObject: index.html
+            DefaultCacheBehavior:
+              TargetOriginId: myS3Origin
+              LambdaFunctionAssociations:
+                - 
+                  EventType: viewer-request
+                  LambdaFunctionARN: !Ref CloudFrontAuthFunction.Version
+              ForwardedValues:
+                    QueryString: 'false'
+                    Headers:
+                        - Origin
+                    Cookies:
+                        Forward: none
+              ViewerProtocolPolicy:
+                "allow-all"
+    CloudFrontAuthFunction:
+        Type: AWS::Serverless::Function
+        Properties:
+          CodeUri: src/js/
+          Role: !GetAtt LambdaEdgeFunctionRole.Arn
+          Runtime: nodejs10.x
+          Handler: auth.handle
+          Timeout: 5
+          AutoPublishAlias: LIVE
+
+    LambdaEdgeFunctionRole:
+      Type: "AWS::IAM::Role"
+      Properties:
+          Path: "/"
+          ManagedPolicyArns:
+              - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+          Policies:
+            - PolicyName: !Sub "Lambda-${AWS::StackName}"
+              PolicyDocument:
+                Version: "2012-10-17"
+                Statement:
+                  - Effect: Allow
+                    Action:
+                      - "secretsmanager:GetResourcePolicy"
+                      - "secretsmanager:GetSecretValue"
+                      - "secretsmanager:DescribeSecret"
+                      - "secretsmanager:ListSecretVersionIds"
+                    Resource: "*"
+                      
+          AssumeRolePolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Sid: "AllowLambdaServiceToAssumeRole"
+                Effect: "Allow"
+                Action:
+                  - "sts:AssumeRole"
+                Principal:
+                  Service:
+                    - "lambda.amazonaws.com"
+                    - "edgelambda.amazonaws.com"
+
+Outputs:
+
+    CloudFrontAuthFunction:
+      Description: Lambda@Edge CloudFront Auth Function ARN
+      Value: !GetAtt CloudFrontAuthFunction.Arn
+
+    CloudFrontAuthFunctionVersion:
+      Description: Lambda@Edge CloudFront Auth Function ARN with Version
+      Value: !Ref CloudFrontAuthFunction.Version
