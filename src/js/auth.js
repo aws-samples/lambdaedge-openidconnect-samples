@@ -421,7 +421,6 @@ function getInternalServerErrorPayload() {
   </head>
   <body>
       <div class="cover"><h1>Internal Server Error <small>Error 500</small></h1></div>
-      <footer><p><a href="https://github.com/widen/cloudfront-auth">cloudfront-auth</a></p></footer>
   </body>
   </html>
   `;
