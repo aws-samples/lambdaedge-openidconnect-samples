@@ -6,13 +6,15 @@ Description: SAM configuration for cloudfront-auth function
 Parameters: 
     BucketName:
         Type: String
-        Default: 'cl-bucket-2232'
 Resources:
-
     S3Bucket:
         Type: 'AWS::S3::Bucket'
         Properties:
             BucketName: !Ref BucketName
+    S3CloudFrontAccessLoggingBucket:
+        Type: 'AWS::S3::Bucket'
+        Properties:
+            BucketName: !Sub "${BucketName}-access-logging"
       # Configure the bucket as a CloudFront Origin
     ReadPolicy:
      Type: 'AWS::S3::BucketPolicy'
@@ -33,6 +35,8 @@ Resources:
     CFDistribution:
         Type: AWS::CloudFront::Distribution
         Properties:
+          Logging:
+            Bucket: !Ref S3CloudFrontAccessLoggingBucket
           DistributionConfig:
             Enabled: 'true'
             Origins:
