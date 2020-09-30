@@ -35,6 +35,11 @@ Resources:
     CFDistribution:
         Type: AWS::CloudFront::Distribution
         Properties:
+          CustomOriginConfig:
+            OriginProtocolPolicy:
+              - https-only
+            OriginSSLProtocols:
+              - TLSv1.2
           Logging:
             Bucket: !Ref S3CloudFrontAccessLoggingBucket
           DistributionConfig:
