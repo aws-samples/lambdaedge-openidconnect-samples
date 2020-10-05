@@ -46,6 +46,9 @@ Resources:
     CFDistribution:
         Type: AWS::CloudFront::Distribution
         Properties:
+          DistributionConfig:
+            Logging:
+              Enabled: true
           CustomOriginConfig:
             OriginProtocolPolicy:
               - https-only
