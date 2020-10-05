@@ -47,16 +47,15 @@ Resources:
         Type: AWS::CloudFront::Distribution
         Properties:
           DistributionConfig:
-            Logging:
-              Bucket: !Ref AccessLoggingBucket
-              Prefix: "cloudfront/"
           CustomOriginConfig:
             OriginProtocolPolicy:
               - https-only
             OriginSSLProtocols:
               - TLSv1.2
           Logging:
-            Bucket: !Ref AccessLoggingBucket
+              Bucket: !Ref AccessLoggingBucket
+              IncludeCookies : "true"
+              Prefix: "cloudfront/"
           DistributionConfig:
             Enabled: 'true'
             Origins:
