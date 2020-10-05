@@ -19,7 +19,7 @@ Resources:
               ServerSideEncryptionConfiguration:
                 ServerSideEncryptionByDefault:
                   - SSEAlgorithm: AES256
-    S3CloudFrontAccessLoggingBucket:
+    AccessLoggingBucket:
         Type: 'AWS::S3::Bucket'
         Properties:
             BucketName: !Sub "${BucketName}-access-logging"
@@ -48,14 +48,15 @@ Resources:
         Properties:
           DistributionConfig:
             Logging:
-              Enabled: true
+              Bucket: !Ref AccessLoggingBucket
+              Prefix: "cloudfront/"
           CustomOriginConfig:
             OriginProtocolPolicy:
               - https-only
             OriginSSLProtocols:
               - TLSv1.2
           Logging:
-            Bucket: !Ref S3CloudFrontAccessLoggingBucket
+            Bucket: !Ref AccessLoggingBucket
           DistributionConfig:
             Enabled: 'true'
             Origins:
