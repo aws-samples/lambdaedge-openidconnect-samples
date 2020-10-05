@@ -6,16 +6,27 @@ Description: SAM configuration for cloudfront-auth function
 Parameters: 
     BucketName:
         Type: String
+        Description: The name of the Static Content S3 Bucket to Create
+    SecretKeyName:
+        Type: String
+        Description: The name of the Secret in Secrets manager for the OIDC configuaration (e.g. okta-configuration-v4cw9Z)
 Resources:
     S3Bucket:
         Type: 'AWS::S3::Bucket'
         Properties:
             BucketName: !Ref BucketName
+            BucketEncryption:
+              ServerSideEncryptionConfiguration:
+                ServerSideEncryptionByDefault:
+                  - SSEAlgorithm: AES256
     S3CloudFrontAccessLoggingBucket:
         Type: 'AWS::S3::Bucket'
         Properties:
             BucketName: !Sub "${BucketName}-access-logging"
-      # Configure the bucket as a CloudFront Origin
+            BucketEncryption:
+              ServerSideEncryptionConfiguration:
+                ServerSideEncryptionByDefault:
+                  - SSEAlgorithm: AES256
     ReadPolicy:
      Type: 'AWS::S3::BucketPolicy'
      Properties:
@@ -75,7 +86,6 @@ Resources:
           Handler: auth.handle
           Timeout: 5
           AutoPublishAlias: LIVE
-
     LambdaEdgeFunctionRole:
       Type: "AWS::IAM::Role"
       Properties:
@@ -93,8 +103,7 @@ Resources:
                       - "secretsmanager:GetSecretValue"
                       - "secretsmanager:DescribeSecret"
                       - "secretsmanager:ListSecretVersionIds"
-                    Resource: "*"
-                      
+                    Resource: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${SecretKeyName}"
           AssumeRolePolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -107,13 +116,10 @@ Resources:
                   Service:
                     - "lambda.amazonaws.com"
                     - "edgelambda.amazonaws.com"
-
 Outputs:
-
     CloudFrontAuthFunction:
       Description: Lambda@Edge CloudFront Auth Function ARN
       Value: !GetAtt CloudFrontAuthFunction.Arn
-
     CloudFrontAuthFunctionVersion:
       Description: Lambda@Edge CloudFront Auth Function ARN with Version
       Value: !Ref CloudFrontAuthFunction.Version
