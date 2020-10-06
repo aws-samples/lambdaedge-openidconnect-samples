@@ -15,7 +15,6 @@ Resources:
         Type: 'AWS::S3::Bucket'
         Properties:
             BucketName: !Ref BucketName
-            AccessControl: "LogDeliveryWrite"
             BucketEncryption:
               ServerSideEncryptionConfiguration: 
                 -
@@ -24,6 +23,7 @@ Resources:
             LoggingConfiguration:
               DestinationBucketName: !Ref S3AccessLoggingBucket
               LogFilePrefix: "accessLogs/"
+
     S3AccessLoggingBucket:
         Type: 'AWS::S3::Bucket'
         Properties:
@@ -52,12 +52,12 @@ Resources:
          Comment: !Ref S3Bucket
     CFDistribution:
         Type: AWS::CloudFront::Distribution
-        # ViewerCertificate:
-        #         CloudFrontDefaultCertificate: 'true'
-        #         SSLSupportMethod: sni-only
-        #         MinimumProtocolVersion: TLSv1.2_2018 
-        Properties:           
+        Properties:            
           DistributionConfig:
+            ViewerCertificate:
+              CloudFrontDefaultCertificate: 'true'
+              # SslSupportMethod: sni-only
+              MinimumProtocolVersion: TLSv1.2_2018
             Logging:
               Bucket: !GetAtt S3AccessLoggingBucket.DomainName
               IncludeCookies : "true"
