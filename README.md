@@ -61,15 +61,16 @@ Automate the deployment of CloudFront and Lambda@edge Function
 
       Command: sam package \
                 --template-file build/template.yaml \
-                --s3-bucket viyoma-private-s3 \
+                --s3-bucket backfill-glueresultbucket-tcm1fx69rs17 \
                 --output-template-file build/packaged.yaml
 
   c. Deploy Lambda functions through AWS CloudFormation from the S3 bucket created above. AWS SAM CLI now creates and manages this Amazon S3 bucket for you.
 
       Command:  sam deploy \
                 --template-file build/packaged.yaml \
-                --stack-name oidc-auth2 \
-                --capabilities CAPABILITY_NAMED_IAM 
+                --stack-name oidc-auth5 \
+                --capabilities CAPABILITY_NAMED_IAM \
+				--parameter-overrides BucketName=noyce-static-site SecretKeyName=okta-configuration-v4cw9Z
 
 ## Security
 
