@@ -6,16 +6,40 @@ Description: SAM configuration for cloudfront-auth function
 Parameters: 
     BucketName:
         Type: String
-        Default: 'cl-bucket-2232'
+        Description: The name of the Static Content S3 Bucket to Create
+    SecretKeyName:
+        Type: String
+        Description: The name of the Secret in Secrets manager for the OIDC configuaration (e.g. okta-configuration-v4cw9Z)
+    MinimumTLSVersion:
+        Type: String
+        Description: The minimum version to use for CloudFront TLS
+        Default: TLSv1.2_2018
 Resources:
-
     S3Bucket:
-        Type: 'AWS::S3::Bucket'
+        Type: AWS::S3::Bucket
         Properties:
             BucketName: !Ref BucketName
-      # Configure the bucket as a CloudFront Origin
+            BucketEncryption:
+              ServerSideEncryptionConfiguration: 
+                -
+                  ServerSideEncryptionByDefault:
+                    SSEAlgorithm: AES256
+            LoggingConfiguration:
+              DestinationBucketName: !Ref S3AccessLoggingBucket
+              LogFilePrefix: "accessLogs/"
+
+    S3AccessLoggingBucket:
+        Type: AWS::S3::Bucket
+        Properties:
+            BucketName: !Sub "${BucketName}-access-logging"
+            AccessControl: "LogDeliveryWrite"
+            BucketEncryption:
+              ServerSideEncryptionConfiguration: 
+                -
+                  ServerSideEncryptionByDefault:
+                    SSEAlgorithm: AES256
     ReadPolicy:
-     Type: 'AWS::S3::BucketPolicy'
+     Type: AWS::S3::BucketPolicy
      Properties:
         Bucket: !Ref S3Bucket
         PolicyDocument:
@@ -26,14 +50,21 @@ Resources:
            Principal:
              CanonicalUser: !GetAtt CloudFrontOriginAccessIdentity.S3CanonicalUserId
     CloudFrontOriginAccessIdentity:
-     Type: 'AWS::CloudFront::CloudFrontOriginAccessIdentity'
+     Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
      Properties:
         CloudFrontOriginAccessIdentityConfig:
          Comment: !Ref S3Bucket
     CFDistribution:
         Type: AWS::CloudFront::Distribution
-        Properties:
+        Properties:            
           DistributionConfig:
+            ViewerCertificate:
+              CloudFrontDefaultCertificate: 'true'
+              MinimumProtocolVersion: !Ref MinimumTLSVersion
+            Logging:
+              Bucket: !GetAtt S3AccessLoggingBucket.DomainName
+              IncludeCookies : "true"
+              Prefix: "cloudfront/"
             Enabled: 'true'
             Origins:
             - DomainName: !GetAtt S3Bucket.DomainName
@@ -66,9 +97,8 @@ Resources:
           Handler: auth.handle
           Timeout: 5
           AutoPublishAlias: LIVE
-
     LambdaEdgeFunctionRole:
-      Type: "AWS::IAM::Role"
+      Type: AWS::IAM::Role
       Properties:
           Path: "/"
           ManagedPolicyArns:
@@ -84,8 +114,7 @@ Resources:
                       - "secretsmanager:GetSecretValue"
                       - "secretsmanager:DescribeSecret"
                       - "secretsmanager:ListSecretVersionIds"
-                    Resource: "*"
-                      
+                    Resource: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${SecretKeyName}"
           AssumeRolePolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -98,13 +127,10 @@ Resources:
                   Service:
                     - "lambda.amazonaws.com"
                     - "edgelambda.amazonaws.com"
-
 Outputs:
-
     CloudFrontAuthFunction:
       Description: Lambda@Edge CloudFront Auth Function ARN
       Value: !GetAtt CloudFrontAuthFunction.Arn
-
     CloudFrontAuthFunctionVersion:
       Description: Lambda@Edge CloudFront Auth Function ARN with Version
       Value: !Ref CloudFrontAuthFunction.Version
