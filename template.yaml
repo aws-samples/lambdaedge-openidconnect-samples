@@ -7,6 +7,9 @@ Parameters:
     BucketName:
         Type: String
         Description: The name of the Static Content S3 Bucket to Create
+    LogBucketName:
+          Type: String
+          Description: The name of the Log Content S3 Bucket already existing
     SecretKeyName:
         Type: String
         Description: The name of the Secret in Secrets manager for the OIDC configuaration (e.g. okta-configuration-v4cw9Z)
@@ -25,19 +28,9 @@ Resources:
                   ServerSideEncryptionByDefault:
                     SSEAlgorithm: AES256
             LoggingConfiguration:
-              DestinationBucketName: !Ref S3AccessLoggingBucket
+              DestinationBucketName: !Ref LogBucketName
               LogFilePrefix: "accessLogs/"
 
-    S3AccessLoggingBucket:
-        Type: AWS::S3::Bucket
-        Properties:
-            BucketName: !Sub "${BucketName}-access-logging"
-            AccessControl: "LogDeliveryWrite"
-            BucketEncryption:
-              ServerSideEncryptionConfiguration: 
-                -
-                  ServerSideEncryptionByDefault:
-                    SSEAlgorithm: AES256
     ReadPolicy:
      Type: AWS::S3::BucketPolicy
      Properties:
@@ -62,7 +55,7 @@ Resources:
               CloudFrontDefaultCertificate: 'true'
               MinimumProtocolVersion: !Ref MinimumTLSVersion
             Logging:
-              Bucket: !GetAtt S3AccessLoggingBucket.DomainName
+              Bucket: !GetAtt LogBucketName.DomainName
               IncludeCookies : "true"
               Prefix: "cloudfront/"
             Enabled: 'true'
