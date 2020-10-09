@@ -70,7 +70,7 @@ Automate the deployment of CloudFront and Lambda@edge Function
                 --template-file build/packaged.yaml \
                 --stack-name oidc-auth \
                 --capabilities CAPABILITY_NAMED_IAM \
-				--parameter-overrides BucketName=${YOUR_NEW_STATIC_SITE_BUCKET_NAME} SecretKeyName=${YOUR_SECRETS_MANAGER_KEY_NAME}
+				--parameter-overrides BucketName=${YOUR_NEW_STATIC_SITE_BUCKET_NAME} LogBucketName=${YOUR_LOG_BUCKET_NAME} SecretKeyName=${YOUR_SECRETS_MANAGER_KEY_NAME}
 
 ## Security
 
