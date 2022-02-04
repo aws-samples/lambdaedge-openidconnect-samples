@@ -242,9 +242,7 @@ async function fetchConfigFromSecretsManager() {
 	} // Attempted to read from CloudFront Custom Header due to Environment variable limitations // Must be an Origin Request, but we need this to be a Viewer Request.
 	const secret = await deps.sm.getSecretValue({ SecretId: secretId }).promise(); // eslint-disable-next-line no-buffer-constructor
 	const buff = new Buffer(JSON.parse(secret.SecretString).config, 'base64');
-	log.info('base64 config value', { buff });
 	const decodedval = JSON.parse(buff.toString('utf-8'));
-	log.info('base64 decoded value', { decodedval });
 	return decodedval;
 }
 
