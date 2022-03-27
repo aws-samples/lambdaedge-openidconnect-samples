@@ -20,7 +20,7 @@
 		"jsonwebtoken": "^8.1.0",
 		"jwk-to-pem": "^1.2.6",
 		"acorn": ">=7.1.1",
-		"minimist": ">=0.2.1",
+		"minimist": ">=1.2.6",
 		"elliptic": ">=6.5.4"
 	},
 	"devDependencies": {
