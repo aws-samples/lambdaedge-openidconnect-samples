@@ -13,10 +13,10 @@ Automate the deployment of CloudFront and Lambda@edge Function
 
 #### This will create the following AWS infrastructure
 
-- S3 Bucket
+- S3 Data Bucket
+- S3 Logging Bucket
 - CloudFront Distribution
-- Lambda@Edge Function
-- Attaching Lambda@Edge Function to CloudFront for OpenID Connect Flow to Okta.
+- Lambda@Edge Function for OIDC Auth
 
 
 #### 1. Prerequisites/Assumptions
