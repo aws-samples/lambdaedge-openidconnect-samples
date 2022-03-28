@@ -23,8 +23,6 @@ Resources:
       Properties:
         AccessControl: LogDeliveryWrite
         BucketName: !Ref LogBucketName
-        VersioningConfiguration:
-          Status: Enabled
         BucketEncryption:
               ServerSideEncryptionConfiguration: 
                 -
