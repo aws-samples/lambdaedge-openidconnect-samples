@@ -1,4 +1,4 @@
-# Automate Deployment of Lambda Function
+# CloudFront and Lambnda@Edge OIDC Function
 
 ## Purpose
 
