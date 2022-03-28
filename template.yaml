@@ -18,6 +18,16 @@ Parameters:
         Description: The minimum version to use for CloudFront TLS
         Default: TLSv1.2_2018
 Resources:
+    LoggingBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        AccessControl: LogDeliveryWrite
+        BucketName: !Ref LogBucketName
+        BucketEncryption:
+              ServerSideEncryptionConfiguration: 
+                -
+                  ServerSideEncryptionByDefault:
+                    SSEAlgorithm: AES256
     S3Bucket:
         Type: AWS::S3::Bucket
         Properties:
@@ -28,9 +38,8 @@ Resources:
                   ServerSideEncryptionByDefault:
                     SSEAlgorithm: AES256
             LoggingConfiguration:
-              DestinationBucketName: !Ref LogBucketName
+              DestinationBucketName: !Ref LoggingBucket
               LogFilePrefix: "accessLogs/"
-
     ReadPolicy:
      Type: AWS::S3::BucketPolicy
      Properties:
