@@ -1,4 +1,4 @@
-# CloudFront and Lambnda@Edge OIDC Function
+# CloudFront and Lambda@Edge OIDC Function
 
 ## Purpose
 
