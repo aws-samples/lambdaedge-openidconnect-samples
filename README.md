@@ -71,6 +71,7 @@ Please export the following variables before running the steps below:
 - `SAM_DEPLOYMENT_BUCKET` = this is an **existing** AWS S3 bucket in the same region for SAM artifacts to be staged in
 - `NEW_LOG_BUCKET_NAME` = the name of the **new** AWS S3 Bucket to create for logging and auditing
 - `NEW_STATIC_SITE_BUCKET_NAME` = the name of the **new** AWS S3 Bucket to store all static content to be served up by the Amazon CloudFront Distribution
+- `SECRETS_MANAGER_KEY_NAME` = the name of the AWS Secrets Manager Key created for storing relevant OIDC Application Information
 
 
 #### 2. Steps to set up the Distribution
@@ -92,7 +93,7 @@ Please export the following variables before running the steps below:
                 --template-file build/packaged.yaml \
                 --stack-name oidc-auth \
                 --capabilities CAPABILITY_NAMED_IAM \
-				--parameter-overrides BucketName=${YOUR_NEW_STATIC_SITE_BUCKET_NAME} LogBucketName=${NEW_LOG_BUCKET_NAME} SecretKeyName=${YOUR_SECRETS_MANAGER_KEY_NAME}
+				--parameter-overrides BucketName=${NEW_STATIC_SITE_BUCKET_NAME} LogBucketName=${NEW_LOG_BUCKET_NAME} SecretKeyName=${SECRETS_MANAGER_KEY_NAME}
 
 ## Security
 
