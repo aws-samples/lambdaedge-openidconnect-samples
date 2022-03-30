@@ -1,4 +1,4 @@
-# CloudFront and Lambda@Edge OIDC Function
+# Amazon CloudFront and Lambda@Edge OIDC Function
 
 ## Purpose
 
@@ -65,6 +65,14 @@ Create a globally-distributed Amazon CloudFront Distribution (CDN) that will sec
 
   Prerequisite: Create a file in `src/js` called okta-key.txt which is the key for the secret manager path pointing to the base 64 encoded file as mentioned above.
 
+#### 1a. SAM Template Parameters
+
+Please export the following variables before running the steps below:
+- `SAM_DEPLOYMENT_BUCKET` = this is an **existing** AWS S3 bucket in the same region for SAM artifacts to be staged in
+- `NEW_LOG_BUCKET_NAME` = the name of the **new** AWS S3 Bucket to create for logging and auditing
+- `NEW_STATIC_SITE_BUCKET_NAME` = the name of the **new** AWS S3 Bucket to store all static content to be served up by the Amazon CloudFront Distribution
+
+
 #### 2. Steps to set up the Distribution
 
   a. Build lambda function, and prepare them for subsequent steps in the workflow
@@ -75,7 +83,7 @@ Create a globally-distributed Amazon CloudFront Distribution (CDN) that will sec
 
       Command: sam package \
                 --template-file build/template.yaml \
-                --s3-bucket ${YOUR_S3_SAM_BUCKET} \
+                --s3-bucket ${SAM_DEPLOYMENT_BUCKET} \
                 --output-template-file build/packaged.yaml
 
   c. Deploy Lambda functions through AWS CloudFormation from the S3 bucket created above. AWS SAM CLI now creates and manages this Amazon S3 bucket for you.
@@ -84,7 +92,7 @@ Create a globally-distributed Amazon CloudFront Distribution (CDN) that will sec
                 --template-file build/packaged.yaml \
                 --stack-name oidc-auth \
                 --capabilities CAPABILITY_NAMED_IAM \
-				--parameter-overrides BucketName=${YOUR_NEW_STATIC_SITE_BUCKET_NAME} LogBucketName=${YOUR_LOG_BUCKET_NAME} SecretKeyName=${YOUR_SECRETS_MANAGER_KEY_NAME}
+				--parameter-overrides BucketName=${YOUR_NEW_STATIC_SITE_BUCKET_NAME} LogBucketName=${NEW_LOG_BUCKET_NAME} SecretKeyName=${YOUR_SECRETS_MANAGER_KEY_NAME}
 
 ## Security
 
