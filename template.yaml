@@ -64,7 +64,7 @@ Resources:
               CloudFrontDefaultCertificate: 'true'
               MinimumProtocolVersion: !Ref MinimumTLSVersion
             Logging:
-              Bucket: !GetAtt LogBucketName.DomainName
+              Bucket: !GetAtt LoggingBucket.DomainName
               IncludeCookies : "true"
               Prefix: "cloudfront/"
             Enabled: 'true'
