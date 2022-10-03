@@ -23,6 +23,9 @@ Create a globally-distributed Amazon CloudFront Distribution (CDN) that will sec
 - AWS SAM CLI
 - AWS Credentials in Environment
 
+## Identity Provider (IdP) Setup Instructions
+- [Okta Application Registration](docs/okta.md)
+
 ### TL;DR
 
 #### This will create the following AWS infrastructure
