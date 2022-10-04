@@ -24,6 +24,7 @@ Create a globally-distributed Amazon CloudFront Distribution (CDN) that will sec
 - AWS Credentials in Environment
 
 ## Identity Provider (IdP) Setup Instructions
+- [Amazon Cognito Application Registration](docs/cognito.md)
 - [Okta Application Registration](docs/okta.md)
 
 ### TL;DR
@@ -108,6 +109,5 @@ This library is licensed under the MIT-0 License. See the LICENSE file.
 
 ## Contributors
 
-- Matt Noyce
 - Viyoma Sachdeva
-
+- Matt Noyce
