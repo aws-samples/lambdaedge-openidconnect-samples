@@ -377,7 +377,7 @@ function getUnauthorizedPayload(error, errorDescription, errorUri) {
   </head>
   <body>
       <div class="cover"><h1>${error}</h1><small>Error 401</small><p class="lead">${errorDescription}</p><p>${errorUri}</p></div>
-      <footer><p><a href="https://github.com/widen/cloudfront-auth">cloudfront-auth</a></p></footer>
+      <footer><p><a href="https://github.com/aws-samples/lambdaedge-openidconnect-samples">cloudfront-auth</a></p></footer>
   </body>
   </html>
   `;
