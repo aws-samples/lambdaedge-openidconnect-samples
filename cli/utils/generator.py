@@ -96,7 +96,7 @@ def base_64_encode_config(
         encoded_config = base64.b64encode(config_bytes).decode('ASCII')
         file.write(
             json.dumps({
-                "encoded_config": encoded_config
+                "config": encoded_config
             }, indent = 4)
         )
 

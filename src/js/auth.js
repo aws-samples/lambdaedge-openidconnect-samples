@@ -234,7 +234,7 @@ async function fetchConfigFromSecretsManager() {
 	// Get Secrets Manager Config Key from File since we cannot use environment variables.
 	if (secretId == undefined) {
 		try {
-			secretId = fs.readFileSync('./okta-key.txt', 'utf-8');
+			secretId = fs.readFileSync('./sm-key.txt', 'utf-8');
 			secretId = secretId.replace(/(\r\n|\n|\r)/gm, '');
 		} catch (err) {
 			log.error(err);

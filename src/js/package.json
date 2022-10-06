@@ -1,8 +1,8 @@
 {
-	"name": "aws-static-pages",
+	"name": "lambdaedge-openidconnect-samples",
 	"repository": {
 		"type": "git",
-		"url": "https://git-codecommit.us-east-1.amazonaws.com/v1/repos/aws-static-pages"
+		"url": "https://github.com/aws-samples/lambdaedge-openidconnect-samples"
 	},
 	"version": "0.1.0",
 	"description": "private github-pages",

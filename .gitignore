@@ -1,3 +1,4 @@
 scripts/utils/__pycache__
 scripts/cloudfront_config_rendered.json
 scripts/encoded_cloudfront_config_rendered.json
+cli/utils/__pycache__/

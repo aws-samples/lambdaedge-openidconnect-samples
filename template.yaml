@@ -1,4 +1,4 @@
-# Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: MIT-0
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
@@ -10,9 +10,9 @@ Parameters:
     LogBucketName:
           Type: String
           Description: The name of the Log Content S3 Bucket already existing
-    SecretKeyName:
+    SecretKeyArn:
         Type: String
-        Description: The name of the Secret in Secrets manager for the OIDC configuaration (e.g. okta-configuration-v4cw9Z)
+        Description: The ARN of the Secret in Secrets manager for the OIDC configuaration (e.g. okta-configuration-v4cw9Z)
     MinimumTLSVersion:
         Type: String
         Description: The minimum version to use for CloudFront TLS
@@ -116,7 +116,7 @@ Resources:
                       - "secretsmanager:GetSecretValue"
                       - "secretsmanager:DescribeSecret"
                       - "secretsmanager:ListSecretVersionIds"
-                    Resource: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${SecretKeyName}"
+                    Resource: !Ref SecretKeyArn
           AssumeRolePolicyDocument:
             Version: "2012-10-17"
             Statement:
@@ -130,6 +130,9 @@ Resources:
                     - "lambda.amazonaws.com"
                     - "edgelambda.amazonaws.com"
 Outputs:
+    CloudFrontDomainName:
+      Description: The Domain name of the Amazon CloudFront Distribution
+      Value: !GetAtt CFDistribution.DomainName
     CloudFrontAuthFunction:
       Description: Lambda@Edge CloudFront Auth Function ARN
       Value: !GetAtt CloudFrontAuthFunction.Arn

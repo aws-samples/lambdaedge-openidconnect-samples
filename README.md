@@ -17,16 +17,6 @@ Create a globally-distributed Amazon CloudFront Distribution (CDN) that will sec
 	2. If Authentication challenge succeeds - continue on.
 4. Retrieve object from Amazon S3 bucket and return content to requestor via Amazon CloudFront Distribution. User is happy :)
 
-
-## Dependencies
-
-- AWS SAM CLI
-- AWS Credentials in Environment
-
-## Identity Provider (IdP) Setup Instructions
-- [Amazon Cognito Application Registration](docs/cognito.md)
-- [Okta Application Registration](docs/okta.md)
-
 ### TL;DR
 
 #### This will create the following AWS infrastructure
@@ -36,68 +26,37 @@ Create a globally-distributed Amazon CloudFront Distribution (CDN) that will sec
 - CloudFront Distribution
 - Lambda@Edge Function for OIDC Auth
 
+## Pre-requisites
 
-#### 1. Prerequisites/Assumptions
+- [AWS SAM CLI is Installed](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html)
+- [AWS Credentials are setup in your Environment](https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/setup-credentials.html)
+- [An S3 Bucket is created in your AWS account in the Same Region you are deploying to](https://docs.aws.amazon.com/AmazonS3/latest/userguide/create-bucket-overview.html)
+- [Python3 is Installed in your Environment](https://www.python.org/downloads/)
+- [Pip3 is Installed in your Environment](https://pip.pypa.io/en/stable/installation/)
 
-  Assumption : Secret Manager has the base64 encoded Okta configuration file (sample of the original configuration file is shown below with the dummy values, please replace the dummy values after setting up the values in Okta)
+## Steps For Setup
 
-  ```json
-{
-	"AUTH_REQUEST": {
-		"client_id": "${CLIENT_ID_FROM_OKTA}",
-		"response_type": "code",
-		"scope": "openid email",
-		"redirect_uri": "https://${CLOUDFRONT_DIST_URL}/_callback"
-	},
-	"TOKEN_REQUEST": {
-		"client_id": "${CLIENT_ID_FROM_OKTA}",
-		"redirect_uri": "https://${CLOUDFRONT_DIST_URL}/_callback",
-		"grant_type": "authorization_code",
-		"client_secret": "${CLIENT_SECRET_FROM_OKTA}"
-	},
-	"DISTRIBUTION": "amazon-oai",
-	"AUTHN": "OKTA",
-	"PRIVATE_KEY": "${PRIVATE_KEY_GOES_HERE}",
-	"PUBLIC_KEY": "${PUBLIC_KEY_GOES_HERE}",
-	"DISCOVERY_DOCUMENT": "https://${OKTA_DOMAIN_NAME}/.well-known/openid-configuration",
-	"SESSION_DURATION": 30,
-	"BASE_URL": "https://${OKTA_DOMAIN_NAME}/",
-	"CALLBACK_PATH": "/_callback",
-	"AUTHZ": "OKTA"
-}
-```
+The following set of steps should be followed to deploy this solution:
 
-  Prerequisite: Create a file in `src/js` called okta-key.txt which is the key for the secret manager path pointing to the base 64 encoded file as mentioned above.
+1. [Create a base AWS Secrets Manager Secret Configuration](docs/baseconfiguration.md)
+2. [Deploy the AWS SAM Stack](docs/deploy.md)
+3. [Set up Registered OIDC Application](docs/registerapplication.md)
+4. [Generate OIDC Configuration](docs/configuration.md)
+5. [Update AWS Secrets Manager](docs/secretsmanager.md)
+6. [Navigate to Amazon CloudFront URL / Troubleshoot](docs/cloudfront.md)
 
-#### 1a. SAM Template Parameters
+## Configuration CLI
 
-Please export the following variables before running the steps below:
-- `SAM_DEPLOYMENT_BUCKET` = this is an **existing** AWS S3 bucket in the same region for SAM artifacts to be staged in
-- `NEW_LOG_BUCKET_NAME` = the name of the **new** AWS S3 Bucket to create for logging and auditing
-- `NEW_STATIC_SITE_BUCKET_NAME` = the name of the **new** AWS S3 Bucket to store all static content to be served up by the Amazon CloudFront Distribution
-- `SECRETS_MANAGER_KEY_NAME` = the name of the AWS Secrets Manager Key created for storing relevant OIDC Application Information
+For more details about generating the configuration file for AWS Secrets Manager please refer to [CLI Documentation](cli/README.md)
 
+## Troubleshooting
 
-#### 2. Steps to set up the Distribution
+Please refer to this [document](docs/cloudfront.md) for Troubleshooting common scenarios. Open a GitHub issue if this does not help!
 
-  a. Build lambda function, and prepare them for subsequent steps in the workflow
-  
-      Command: sam build -b ./build -s . -t template.yaml -u
+## Identity Provider (IdP) Setup Instructions
+- [Amazon Cognito Application Registration](docs/cognito.md)
+- [Okta Application Registration](docs/okta.md)
 
-  b. Packages the above LambdaFunction. It creates a ZIP file of the code and dependencies, and uploads it to Amazon S3 (please create the S3 bucket and mention the bucket name in the command below). It then returns a copy of AWS SAM template, replacing references to local artifacts with the Amazon S3 location where the command uploaded the artifacts
-
-      Command: sam package \
-                --template-file build/template.yaml \
-                --s3-bucket ${SAM_DEPLOYMENT_BUCKET} \
-                --output-template-file build/packaged.yaml
-
-  c. Deploy Lambda functions through AWS CloudFormation from the S3 bucket created above. AWS SAM CLI now creates and manages this Amazon S3 bucket for you.
-
-      Command:  sam deploy \
-                --template-file build/packaged.yaml \
-                --stack-name oidc-auth \
-                --capabilities CAPABILITY_NAMED_IAM \
-				--parameter-overrides BucketName=${NEW_STATIC_SITE_BUCKET_NAME} LogBucketName=${NEW_LOG_BUCKET_NAME} SecretKeyName=${SECRETS_MANAGER_KEY_NAME}
 
 ## Security
 
