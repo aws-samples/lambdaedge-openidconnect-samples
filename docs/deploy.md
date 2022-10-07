@@ -57,3 +57,7 @@ sam deploy \
     --capabilities CAPABILITY_NAMED_IAM \
 	--parameter-overrides BucketName=${NEW_STATIC_SITE_BUCKET_NAME} LogBucketName=${NEW_LOG_BUCKET_NAME} SecretKeyArn=${SECRETS_MANAGER_KEY_ARN}
 ```
+
+### Next Step
+
+Navigate to [Set up Registered OIDC Application](registerapplication.md) for the next step.

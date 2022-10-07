@@ -8,3 +8,7 @@ In order to move forward, please register a new application with the Identity Pr
 ## Important!
 Take note of the `Client ID` and `Client Secret` values that are generated after this registration process.
 Also, ensure that you have added the correct `Callback URIs` to the registered Application. It should include the Amazon CloudFront distribution URL with `/_callback` appended.
+
+### Next Step
+
+Navigate to [Generate OIDC Configuration](configuration.md) for the next step.

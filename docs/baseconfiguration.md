@@ -29,3 +29,7 @@ The first step for deploying this solution is to create a dummy configuration pl
 12. Click on the Secret that was just created.
 13. Under the `Secret details` section, copy the `Secret ARN` and save this to a notepad for later use.
 14. Move on to the next step!
+
+### Next Step
+
+Navigate to [Deploy the AWS SAM Stack](deploy.md) for the next step.
