@@ -106,3 +106,7 @@ openssl base64 -in configuration.json -out configuration-encoded.json
 ```
 3. Copy the contents of `configuration-encoded.json` and move on to the next step of updating the AWS Secrets Manager OIDC Secret.
 
+
+### Next Step
+
+Navigate to [Update AWS Secrets Manager](secretsmanager.md) for the next step.

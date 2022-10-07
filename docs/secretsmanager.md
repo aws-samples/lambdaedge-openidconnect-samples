@@ -11,3 +11,7 @@ Here is an example of what the final configuration should look like in AWS Secre
 
 **NOTE:** The Secret Value presented here is the **Base64-Encoded** JSON configuration.
 
+### Next Step
+
+Navigate to [Navigate to Amazon CloudFront URL / Troubleshoot](cloudfront.md) for the next step.
+
