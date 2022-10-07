@@ -18,7 +18,7 @@ The first step for deploying this solution is to create a dummy configuration pl
 
 ![Secrets Manager Key Name](images/secretsmanager/sm-key-name.png)
 
-**NOTE:** This Secret Name should match the name found in the [src/js/sm-key.txt file](../src/js/sm-key.txt) as seen belowand as mentioned above:
+**NOTE:** This Secret Name should match the name found in the [src/js/sm-key.txt file](../src/js/sm-key.txt) as seen below and as mentioned above:
 
 ![Secrets Manager Key File](images/secretsmanager/sm-key-name-file.png)
 
