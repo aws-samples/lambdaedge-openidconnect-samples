@@ -57,29 +57,34 @@ def generate_rendered_config_file(
         config (file) = rendered configuration file.
     """
 
-    base_config = configuration
-
-    base_config['AUTH_REQUEST']['client_id'] = client_id
-    base_config['AUTH_REQUEST']['redirect_uri'] = f"https://{cloudfront_host}/_callback"
-    base_config['TOKEN_REQUEST']['client_id'] = client_id
-    base_config['TOKEN_REQUEST']['client_secret'] = client_secret
-    base_config['TOKEN_REQUEST']['redirect_uri'] = f"https://{cloudfront_host}/_callback"
-    base_config['AUTHN'] = idp_name
-    base_config['AUTHZ'] = idp_name
-    base_config['PRIVATE_KEY'] = openssl_private_key
-    base_config['PUBLIC_KEY'] = openssl_public_key
-
-    if idp_name.lower() == 'cognito':
-        base_config['DISCOVERY_DOCUMENT'] = f"https://cognito-idp.us-east-1.amazonaws.com/userPoolId/.well-known/openid-configuration"
-    else:
-        base_config['DISCOVERY_DOCUMENT'] = f"https://{idp_domain_name}/.well-known/openid-configuration",
-    
-    base_config['BASE_URL'] = f"https://{idp_domain_name}/"
+    base_config = {
+        "AUTH_REQUEST": {
+	        "client_id": f"{client_id}",
+	        "response_type": "code",
+	        "scope": "openid email",
+	        "redirect_uri": f"https://{cloudfront_host}/_callback"
+	    },
+	    "TOKEN_REQUEST": {
+	    	"client_id": f"{client_id}",
+	    	"redirect_uri": f"https://{cloudfront_host}/_callback",
+	    	"grant_type": "authorization_code",
+	    	"client_secret": f"{client_secret}"
+	    },
+	    "DISTRIBUTION": "amazon-oai",
+	    "AUTHN": f"{idp_name}",
+	    "PRIVATE_KEY": f"{openssl_private_key}",
+	    "PUBLIC_KEY": f"{openssl_public_key}",
+	    "DISCOVERY_DOCUMENT": f"https://{idp_domain_name}/.well-known/openid-configuration",
+	    "SESSION_DURATION": 30,
+	    "BASE_URL": f"https://{idp_domain_name}/",
+	    "CALLBACK_PATH": "/_callback",
+	    "AUTHZ": f"{idp_name}"
+    }
 
     with open('cloudfront_config_rendered.json', 'w') as file:
         file.write(
             json.dumps(
-                configuration,
+                base_config,
                 indent = 4
             )
         )
@@ -100,11 +105,3 @@ def base_64_encode_config(
             }, indent = 4)
         )
 
-generate_rendered_config_file(
-    client_id='test_client_id',
-    client_secret='test_client_secret',
-    cloudfront_host='cloudfront-host',
-    idp_domain_name='idp-domain',
-    openssl_private_key='privatekey',
-    openssl_public_key='publickey'
-)
