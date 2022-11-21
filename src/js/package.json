@@ -17,12 +17,12 @@
 	"dependencies": {
 		"acorn": ">=7.1.1",
 		"axios": "^0.21.2",
+		"base64url": "^3.0.1",
 		"cookie": "^0.3.1",
 		"elliptic": ">=6.5.4",
 		"jsonwebtoken": "^8.1.0",
 		"jwk-to-pem": "^1.2.6",
-		"minimist": ">=1.2.6",
-		"pkce-challenge": "^3.0.0"
+		"minimist": ">=1.2.6"
 	},
 	"devDependencies": {
 		"@types/node": "^12.7.8",

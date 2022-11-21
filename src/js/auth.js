@@ -10,7 +10,7 @@ const JwkToPem = require('jwk-to-pem');
 const QueryString = require('querystring');
 const fs = require('fs');
 const Log = require('./lib/log');
-const PkceChallenge = require("pkce-challenge").default;
+const Base64Url = require('base64url');
 
 let discoveryDocument;
 let secretId;
@@ -284,11 +284,22 @@ async function setJwks() {
 	}
 }
 
+function generatePkceCodeVerifier(size = 43) {
+    return Crypto
+    .randomBytes(size)
+    .toString('hex')
+    .slice(0, size)
+}
+
+function generatePkceCodeChallenge(codeVerifier){
+    var hash = Crypto.createHash('sha256').update(codeVerifier).digest();
+    return Base64Url.encode(hash);
+}
+
 // sets PKCE code verifier and code challenge values
 async function setPkceConfigs() {
-	pkceValues = PkceChallenge();
-	pkceCodeChallenge = pkceValues.code_challenge;
-	pkceCodeVerifier = pkceValues.code_verifier;
+	pkceCodeVerifier = generatePkceCodeVerifier();
+	pkceCodeChallenge = generatePkceCodeChallenge(pkceCodeVerifier);
 }
 
 // prepareConfigGlobals sets up all the lambda globals if they are not already set.
