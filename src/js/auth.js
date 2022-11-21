@@ -10,6 +10,7 @@ const JwkToPem = require('jwk-to-pem');
 const QueryString = require('querystring');
 const fs = require('fs');
 const Log = require('./lib/log');
+const Base64Url = require('base64url');
 
 let discoveryDocument;
 let secretId;
@@ -17,6 +18,8 @@ let jwks;
 let config;
 let deps;
 let log;
+let pkceCodeVerifier;
+let pkceCodeChallenge;
 
 /**
  * handle is the starting point for the lambda.
@@ -251,6 +254,14 @@ async function setConfig() {
 	if (config === undefined) {
 		config = await fetchConfigFromSecretsManager();
 	}
+
+	// set PKCE values if client_secret is not present in configurations
+	if (config.TOKEN_REQUEST.client_secret == undefined){
+		config.AUTH_REQUEST.code_challenge_method = "S256";
+		config.AUTH_REQUEST.code_challenge = pkceCodeChallenge;
+		config.AUTH_REQUEST.state = "state";
+		config.TOKEN_REQUEST.code_verifier = pkceCodeVerifier;
+	}
 }
 
 // setDiscoveryDocument sets the discoveryDocument object if it wasn't already set.
@@ -273,8 +284,30 @@ async function setJwks() {
 	}
 }
 
+function generatePkceCodeVerifier(size = 43) {
+    return Crypto
+    .randomBytes(size)
+    .toString('hex')
+    .slice(0, size)
+}
+
+function generatePkceCodeChallenge(codeVerifier){
+    var hash = Crypto.createHash('sha256').update(codeVerifier).digest();
+    return Base64Url.encode(hash);
+}
+
+// sets PKCE code verifier and code challenge values
+async function setPkceConfigs() {
+	if (pkceCodeChallenge == undefined || pkceCodeVerifier == undefined) {
+		pkceCodeVerifier = generatePkceCodeVerifier();
+		pkceCodeChallenge = generatePkceCodeChallenge(pkceCodeVerifier);
+	}
+	
+}
+
 // prepareConfigGlobals sets up all the lambda globals if they are not already set.
 async function prepareConfigGlobals() {
+	await setPkceConfigs();
 	await setConfig();
 	await setDiscoveryDocument();
 	await setJwks();

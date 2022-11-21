@@ -15,25 +15,18 @@
 		"format": "node_modules/prettier/bin-prettier.js --write src/js/**/*.js"
 	},
 	"dependencies": {
+		"acorn": ">=7.1.1",
 		"axios": "^0.21.2",
+		"base64url": "^3.0.1",
 		"cookie": "^0.3.1",
+		"elliptic": ">=6.5.4",
 		"jsonwebtoken": "^8.1.0",
 		"jwk-to-pem": "^1.2.6",
-		"acorn": ">=7.1.1",
-		"minimist": ">=1.2.6",
-		"elliptic": ">=6.5.4"
+		"minimist": ">=1.2.6"
 	},
 	"devDependencies": {
 		"@types/node": "^12.7.8",
 		"aws-sdk": "^2.814.0",
-		"babel-eslint": "^10.0.3",
-		"eslint": "^7.4.0",
-		"eslint-config-airbnb": "^18.0.1",
-		"eslint-config-prettier": "^6.3.0",
-		"eslint-plugin-import": "^2.18.2",
-		"eslint-plugin-jsx-a11y": "^6.2.3",
-		"eslint-plugin-prettier": "^3.1.1",
-		"eslint-plugin-react": "^7.14.3",
 		"jsverify": "^0.8.4",
 		"leaked-handles": "^5.2.0",
 		"nyc": "^15.1.0",
