@@ -298,8 +298,11 @@ function generatePkceCodeChallenge(codeVerifier){
 
 // sets PKCE code verifier and code challenge values
 async function setPkceConfigs() {
-	pkceCodeVerifier = generatePkceCodeVerifier();
-	pkceCodeChallenge = generatePkceCodeChallenge(pkceCodeVerifier);
+	if (pkceCodeChallenge == undefined || pkceCodeVerifier == undefined) {
+		pkceCodeVerifier = generatePkceCodeVerifier();
+		pkceCodeChallenge = generatePkceCodeChallenge(pkceCodeVerifier);
+	}
+	
 }
 
 // prepareConfigGlobals sets up all the lambda globals if they are not already set.
