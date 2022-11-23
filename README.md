@@ -56,6 +56,7 @@ Please refer to this [document](docs/cloudfront.md) for Troubleshooting common s
 ## Identity Provider (IdP) Setup Instructions
 - [Amazon Cognito Application Registration](docs/cognito.md)
 - [Okta Application Registration](docs/okta.md)
+- [Keycloak Client Creation and Registration](docs/keycloak.md)
 
 
 ## Security
