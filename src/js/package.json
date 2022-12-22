@@ -20,7 +20,7 @@
 		"base64url": "^3.0.1",
 		"cookie": "^0.3.1",
 		"elliptic": ">=6.5.4",
-		"jsonwebtoken": "^8.1.0",
+		"jsonwebtoken": "^9.0.0",
 		"jwk-to-pem": "^1.2.6",
 		"minimist": ">=1.2.6"
 	},
