@@ -74,7 +74,7 @@ Resources:
               S3OriginConfig:
                 OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}'
             Enabled: 'true'
-            Comment: Some comment
+            Comment: Amazon CloudFront Distribution Secured by OIDC
             DefaultRootObject: index.html
             DefaultCacheBehavior:
               TargetOriginId: myS3Origin
