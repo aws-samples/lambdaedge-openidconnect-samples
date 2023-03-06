@@ -15,21 +15,14 @@
 		"format": "node_modules/prettier/bin-prettier.js --write src/js/**/*.js"
 	},
 	"dependencies": {
-		"acorn": ">=7.1.1",
 		"axios": "^0.21.2",
 		"base64url": "^3.0.1",
 		"cookie": "^0.3.1",
-		"elliptic": ">=6.5.4",
 		"jsonwebtoken": "^9.0.0",
-		"jwk-to-pem": "^1.2.6",
-		"minimist": ">=1.2.6"
+		"jwk-to-pem": "^1.2.6"
 	},
 	"devDependencies": {
-		"@types/node": "^12.7.8",
 		"aws-sdk": "^2.814.0",
-		"jsverify": "^0.8.4",
-		"leaked-handles": "^5.2.0",
-		"nyc": "^15.1.0",
 		"prettier": "^1.18.2",
 		"tape": "^4.11.0"
 	}
