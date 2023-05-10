@@ -256,7 +256,7 @@ async function setConfig() {
 	}
 
 	// set PKCE values if client_secret is not present in configurations
-	if (config.TOKEN_REQUEST.client_secret == undefined){
+	if (!config.TOKEN_REQUEST.client_secret) {
 		config.AUTH_REQUEST.code_challenge_method = "S256";
 		config.AUTH_REQUEST.code_challenge = pkceCodeChallenge;
 		config.AUTH_REQUEST.state = "state";
