@@ -11,6 +11,8 @@ const QueryString = require('querystring');
 const fs = require('fs');
 const Log = require('./lib/log');
 const Base64Url = require('base64url');
+const createDOMPurify = require('dompurify');
+const { JSDOM } = require('jsdom');
 
 let discoveryDocument;
 let secretId;
@@ -415,8 +417,12 @@ function getUnauthorizedPayload(error, errorDescription, errorUri) {
   </html>
   `;
 
+  const window = new JSDOM('').window;
+  const DOMPurify = createDOMPurify(window);
+  const sanitizedBody = DOMPurify.sanitize(body);
+
 	return {
-		body,
+		sanitizedBody,
 		status: '401',
 		statusDescription: 'Unauthorized',
 		headers: {
