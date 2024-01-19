@@ -7,7 +7,7 @@
 	"version": "0.1.0",
 	"description": "private github-pages",
 	"main": "auth.js",
-	"author": "Jason Legler",
+	"author": "Matt Noyce",
 	"license": "UNLICENSED",
 	"scripts": {
 		"setup": "npm install",
@@ -18,9 +18,10 @@
 		"axios": "^1.6.2",
 		"base64url": "^3.0.1",
 		"cookie": "^0.3.1",
-		"dompurify": "3.0.6",
-		"jsdom": "23.0.1",
 		"jsonwebtoken": "^9.0.0",
 		"jwk-to-pem": "^1.2.6"
+	},
+	"devDependencies": {
+		"depcheck": "^1.4.7"
 	}
 }
