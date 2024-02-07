@@ -5,7 +5,7 @@ configuration = {
     "AUTH_REQUEST": {
 	    "client_id": "$CLIENT_ID_FROM_IDP",
 	    "response_type": "code",
-	    "scope": "openid email",
+	    "scope": "openid email profile",
 	    "redirect_uri": "https://$CLOUDFRONT_DIST_URL/_callback"
 	},
 	"TOKEN_REQUEST": {
@@ -19,7 +19,7 @@ configuration = {
 	"PRIVATE_KEY": "$PRIVATE_KEY_GOES_HERE",
 	"PUBLIC_KEY": "$PUBLIC_KEY_GOES_HERE",
 	"DISCOVERY_DOCUMENT": "https://$IDP_DOMAIN_NAME/.well-known/openid-configuration",
-	"SESSION_DURATION": 30,
+	"SESSION_DURATION": 300,
 	"BASE_URL": "https://$IDP_DOMAIN_NAME/",
 	"CALLBACK_PATH": "/_callback",
 	"AUTHZ": "$IDP_NAME"
@@ -61,7 +61,7 @@ def generate_rendered_config_file(
         "AUTH_REQUEST": {
 	        "client_id": f"{client_id}",
 	        "response_type": "code",
-	        "scope": "openid email",
+	        "scope": "openid email profile",
 	        "redirect_uri": f"https://{cloudfront_host}/_callback"
 	    },
 	    "TOKEN_REQUEST": {
@@ -75,7 +75,7 @@ def generate_rendered_config_file(
 	    "PRIVATE_KEY": f"{openssl_private_key}",
 	    "PUBLIC_KEY": f"{openssl_public_key}",
 	    "DISCOVERY_DOCUMENT": f"https://{idp_domain_name}/.well-known/openid-configuration",
-	    "SESSION_DURATION": 30,
+	    "SESSION_DURATION": 300,
 	    "BASE_URL": f"https://{idp_domain_name}/",
 	    "CALLBACK_PATH": "/_callback",
 	    "AUTHZ": f"{idp_name}"

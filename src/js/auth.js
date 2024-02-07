@@ -1,14 +1,15 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
 // Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: MIT-0
-const AWS = require('aws-sdk');
+
+const { SecretsManager } = require('@aws-sdk/client-secrets-manager');
+
 const Axios = require('axios');
 const Cookie = require('cookie');
 const Crypto = require('crypto');
 const JsonWebToken = require('jsonwebtoken');
 const JwkToPem = require('jwk-to-pem');
 const QueryString = require('querystring');
-const fs = require('fs');
 const Log = require('./lib/log');
 const Base64Url = require('base64url');
 
@@ -33,12 +34,12 @@ let pkceCodeChallenge;
  * dependencies.  If this value is specified (as it will be in tests) then deps will be
  * overwritten with the specified dependencies.
  */
-exports.handle = async (event, ctx, cb, setDeps = setDependencies) => {
+exports.handler = async (event, ctx, cb, setDeps = setDependencies) => {
 	log = new Log(event, ctx);
 	// log.info('init lambda', { event: event });
 	deps = setDeps(deps);
 	try {
-		await prepareConfigGlobals();
+		await prepareConfigGlobals(event);
 		return await authenticate(event);
 	} catch (err) {
 		log.error(err.message, { event: event }, err);
@@ -53,7 +54,7 @@ function setDependencies(dependencies) {
 		// log.info('setting up dependencies');
 		return {
 			axios: Axios,
-			sm: new AWS.SecretsManager({ apiVersion: '2017-10-17', region: 'us-east-1' })
+			sm: new SecretsManager({ region: 'us-east-1' })
 		};
 	}
 	return dependencies;
@@ -233,26 +234,25 @@ function validateNonce(nonce, hash) {
 }
 
 // fetchConfigFromSecretsManager pulls the specified configuration from SecretsManager
-async function fetchConfigFromSecretsManager() {
+async function fetchConfigFromSecretsManager(evt) {
 	// Get Secrets Manager Config Key from File since we cannot use environment variables.
 	if (secretId == undefined) {
 		try {
-			secretId = fs.readFileSync('./sm-key.txt', 'utf-8');
-			secretId = secretId.replace(/(\r\n|\n|\r)/gm, '');
+			secretId = "cloudfront/" + evt.Records[0].cf.config.distributionId;
 		} catch (err) {
 			log.error(err);
 		}
-	} // Attempted to read from CloudFront Custom Header due to Environment variable limitations // Must be an Origin Request, but we need this to be a Viewer Request.
-	const secret = await deps.sm.getSecretValue({ SecretId: secretId }).promise(); // eslint-disable-next-line no-buffer-constructor
-	const buff = new Buffer(JSON.parse(secret.SecretString).config, 'base64');
+	}
+	const secret = await deps.sm.getSecretValue({ SecretId: secretId }); // eslint-disable-next-line no-buffer-constructor
+	const buff = Buffer.from(JSON.parse(secret.SecretString).config, 'base64');
 	const decodedval = JSON.parse(buff.toString('utf-8'));
 	return decodedval;
 }
 
 // setConfig sets the config object to the value from SecretsManager if it wasn't already set.
-async function setConfig() {
+async function setConfig(event) {
 	if (config === undefined) {
-		config = await fetchConfigFromSecretsManager();
+		config = await fetchConfigFromSecretsManager(event);
 	}
 
 	// set PKCE values if client_secret is not present in configurations
@@ -306,9 +306,9 @@ async function setPkceConfigs() {
 }
 
 // prepareConfigGlobals sets up all the lambda globals if they are not already set.
-async function prepareConfigGlobals() {
+async function prepareConfigGlobals(event) {
 	await setPkceConfigs();
-	await setConfig();
+	await setConfig(event);
 	await setDiscoveryDocument();
 	await setJwks();
 }
@@ -329,6 +329,7 @@ function getRedirectPayload({ evt, queryString, decodedToken, headers }) {
 							: queryString.state
 				}
 			],
+			'login': [ { key: 'login', value: decodedToken.payload.email } ],
 			'set-cookie': [
 				{
 					key: 'Set-Cookie',

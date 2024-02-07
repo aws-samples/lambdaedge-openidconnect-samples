@@ -95,8 +95,8 @@ Resources:
         Properties:
           CodeUri: src/js/
           Role: !GetAtt LambdaEdgeFunctionRole.Arn
-          Runtime: nodejs14.x
-          Handler: auth.handle
+          Runtime: nodejs20.x
+          Handler: auth.handler
           Timeout: 5
           AutoPublishAlias: LIVE
     LambdaEdgeFunctionRole:
