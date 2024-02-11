@@ -21,6 +21,9 @@ Resources:
     LoggingBucket:
       Type: AWS::S3::Bucket
       Properties:
+        OwnershipControls:
+          Rules:
+            - ObjectOwnership: BucketOwnerPreferred
         AccessControl: LogDeliveryWrite
         BucketName: !Ref LogBucketName
         BucketEncryption:
