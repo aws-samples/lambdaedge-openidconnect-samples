@@ -15,7 +15,8 @@ If there are issues, ensure that all IdP configurations are set up correctly, in
 
 ### AWS Secrets Manager Configuration
 
-Ensure that the `src/js/sm-key.txt` file is set up with the correct AWS Secrets Manager Secret name. Also, ensure that the Key-Value pair is set up correctly in AWS Secrets Manager including a Base64-encoded value that is the JSON configuration.
+Ensure that the correct AWS Secrets Manager Secret name in use which is "cloudfront/DISTRIBUTION_ID" Also, ensure that the Key-Value pair is set up correctly in AWS Secrets Manager including a Base64-encoded value that is the JSON configuration.
+
 
 ### AWS Secrets Manager Customer-Managed KMS Key Policy
 
