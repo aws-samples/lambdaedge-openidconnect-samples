@@ -68,7 +68,7 @@ def generate_rendered_config_file(
 	    	"client_id": f"{client_id}",
 	    	"redirect_uri": f"https://{cloudfront_host}/_callback",
 	    	"grant_type": "authorization_code",
-	    	"client_secret": f"{client_secret}"
+	    	"client_secret": f"{client_secret}" if client_secret else None
 	    },
 	    "DISTRIBUTION": "amazon-oai",
 	    "AUTHN": f"{idp_name}",
