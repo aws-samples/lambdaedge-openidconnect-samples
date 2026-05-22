@@ -1,5 +1,11 @@
 # Amazon CloudFront and Lambda@Edge OIDC Function
 
+> **⚠️ Important: This repository is provided as an educational sample only.**
+> It is not intended for production use without thorough security review, testing, and hardening.
+> While security improvements are applied periodically, this code may contain vulnerabilities or
+> architectural limitations. You are responsible for assessing and mitigating risks before deploying
+> any code derived from this sample in a production environment.
+
 ## Purpose
 
 Create a globally-distributed Amazon CloudFront Distribution (CDN) that will securely serve-up static files from an Amazon S3 Bucket using OpenID Connect. The purpose of this repository is to allow organizations or users to integrate with their preferred OpenID Connect compliant Identity Provider (IdP). 

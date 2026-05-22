@@ -13,14 +13,14 @@ const QueryString = require('querystring');
 const Log = require('./lib/log');
 const Base64Url = require('base64url');
 
+// Only truly immutable/cacheable data is stored at module level.
+// These are safe to cache because they do not change per-request.
 let discoveryDocument;
 let secretId;
 let jwks;
 let config;
 let deps;
 let log;
-let pkceCodeVerifier;
-let pkceCodeChallenge;
 
 /**
  * handle is the starting point for the lambda.
@@ -36,7 +36,6 @@ let pkceCodeChallenge;
  */
 exports.handler = async (event, ctx, cb, setDeps = setDependencies) => {
 	log = new Log(event, ctx);
-	// log.info('init lambda', { event: event });
 	deps = setDeps(deps);
 	try {
 		await prepareConfigGlobals(event);
@@ -51,7 +50,6 @@ exports.handler = async (event, ctx, cb, setDeps = setDependencies) => {
 // testing.  It's basically dependency injection.
 function setDependencies(dependencies) {
 	if (dependencies === undefined || dependencies === null) {
-		// log.info('setting up dependencies');
 		return {
 			axios: Axios,
 			sm: new SecretsManager({ region: 'us-east-1' })
@@ -68,7 +66,6 @@ async function authenticate(evt) {
 	log.info(config.CALLBACK_PATH);
 	log.info(request.uri);
 	if (request.uri.startsWith(config.CALLBACK_PATH)) {
-		// log.info('callback from OIDC provider received');
 		if (queryString.error) {
 			return handleInvalidQueryString(queryString);
 		}
@@ -76,22 +73,24 @@ async function authenticate(evt) {
 		if (queryString.code === undefined || queryString.code === null) {
 			return getUnauthorizedPayload('No Code Found', '', '');
 		}
+		// Validate the code parameter format (alphanumeric + hyphens/underscores, reasonable length)
+		if (typeof queryString.code !== 'string' || queryString.code.length > 2048 || !/^[a-zA-Z0-9\-_\.]+$/.test(queryString.code)) {
+			return getUnauthorizedPayload('Invalid Code', '', '');
+		}
 		return getNewJwtResponse({ evt, request, queryString, headers });
 	}
 	if ('cookie' in headers && 'TOKEN' in Cookie.parse(headers.cookie[0].value)) {
 		return getVerifyJwtResponse(request, headers);
-	} // log.info('redirecting to OIDC provider');
+	}
 	return getOidcRedirectPayload(request, headers);
 }
 
 // getVerifyJwtResponse gets the appropriate response for verified Jwt.
 async function getVerifyJwtResponse(request, headers) {
-	// log.info('request received with TOKEN cookie', { request, headers });
 	try {
-		// log.info('verifying JWT Response');
 		await verifyJwt(Cookie.parse(headers.cookie[0].value).TOKEN, config.PUBLIC_KEY.trim(), {
 			algorithms: ['RS256']
-		}); // log.info('verified JWT Response');
+		});
 		return request;
 	} catch (err) {
 		switch (err.name) {
@@ -103,7 +102,7 @@ async function getVerifyJwtResponse(request, headers) {
 				return getUnauthorizedPayload('Json Web Token Error', err.message, '');
 			default:
 				log.warn('unknown JWT error, unauthorized', undefined, err);
-				return getUnauthorizedPayload('Unauthorized.', `User is not permitted`, '');
+				return getUnauthorizedPayload('Unauthorized.', 'User is not permitted', '');
 		}
 	}
 }
@@ -111,15 +110,23 @@ async function getVerifyJwtResponse(request, headers) {
 // getNewJwtResponse returns the response required to redirect and get a new Jwt.
 async function getNewJwtResponse({ evt, request, queryString, headers }) {
 	try {
-		config.TOKEN_REQUEST.code = queryString.code; // log.info('details', { config, queryString });
-		const { idToken, decodedToken } = await getIdAndDecodedToken(); // log.info('searching for JWK from discovery document', { jwks, decodedToken, idToken });
+		// Build token request per-invocation to avoid shared state mutation (Finding #7)
+		const tokenRequestParams = Object.assign({}, config.TOKEN_REQUEST, { code: queryString.code });
+
+		// If PKCE is in use, generate fresh code_verifier per request (Finding #2)
+		if (config.TOKEN_REQUEST.client_secret == undefined) {
+			const pkceCodeVerifier = generatePkceCodeVerifier();
+			tokenRequestParams.code_verifier = pkceCodeVerifier;
+		}
+
+		const { idToken, decodedToken } = await getIdAndDecodedToken(tokenRequestParams);
 		const rawPem = jwks.keys.filter((k) => k.kid === decodedToken.header.kid)[0];
 		if (rawPem === undefined) {
 			throw new Error('unable to find expected pem in jwks keys');
 		}
-		const pem = JwkToPem(rawPem); // log.info('verifying JWT', { rawPem, pem });
+		const pem = JwkToPem(rawPem);
 		try {
-			const decoded = await verifyJwt(idToken, pem, { algorithms: ['RS256'] }); // log.info('decoded Jwt', { decoded });
+			const decoded = await verifyJwt(idToken, pem, { algorithms: ['RS256'] });
 			if (
 				'cookie' in headers &&
 				'NONCE' in Cookie.parse(headers.cookie[0].value) &&
@@ -131,11 +138,7 @@ async function getNewJwtResponse({ evt, request, queryString, headers }) {
 		} catch (err) {
 			if (err === undefined || err === null || err.name === undefined || err.name === null) {
 				log.warn('unknown named JWT error, unauthorized.', undefined, err);
-				return getUnauthorizedPayload(
-					'Unknown JWT',
-					`User ${decodedToken.payload.email || 'user'} is not permitted`,
-					''
-				);
+				return getUnauthorizedPayload('Unknown JWT', 'User is not permitted', '');
 			}
 			switch (err.name) {
 				case 'TokenExpiredError':
@@ -146,11 +149,7 @@ async function getNewJwtResponse({ evt, request, queryString, headers }) {
 					return getUnauthorizedPayload('Json Web Token Error', err.message, '');
 				default:
 					log.warn('unknown JWT error, unauthorized', undefined, err);
-					return getUnauthorizedPayload(
-						'Unknown JWT',
-						`User ${decodedToken.payload.email || 'user'} is not permitted`,
-						''
-					);
+					return getUnauthorizedPayload('Unknown JWT', 'User is not permitted', '');
 			}
 		}
 	} catch (error) {
@@ -159,14 +158,14 @@ async function getNewJwtResponse({ evt, request, queryString, headers }) {
 	}
 }
 
-// getIdAndDecodedToken gets the id token and decoded version fo the token from the token
-// endpoint.
-async function getIdAndDecodedToken() {
-	const tokenRequest = QueryString.stringify(config.TOKEN_REQUEST); // log.info('requesting access token.', { discoveryDocument, tokenRequest, config });
-	const response = await deps.axios.post(discoveryDocument.token_endpoint, tokenRequest); // log.info('response', { response });
+// getIdAndDecodedToken gets the id token and decoded version of the token from the token endpoint.
+// Accepts tokenRequestParams built per-request to avoid mutating shared config (Finding #7).
+async function getIdAndDecodedToken(tokenRequestParams) {
+	const tokenRequest = QueryString.stringify(tokenRequestParams);
+	const response = await deps.axios.post(discoveryDocument.token_endpoint, tokenRequest);
 	const decodedToken = JsonWebToken.decode(response.data.id_token, {
 		complete: true
-	}); // log.info('decodedToken', { decodedToken });
+	});
 	return { idToken: response.data.id_token, decodedToken };
 }
 
@@ -235,7 +234,6 @@ function validateNonce(nonce, hash) {
 
 // fetchConfigFromSecretsManager pulls the specified configuration from SecretsManager
 async function fetchConfigFromSecretsManager(evt) {
-	// Get Secrets Manager Config Key from File since we cannot use environment variables.
 	if (secretId == undefined) {
 		try {
 			secretId = "cloudfront/" + evt.Records[0].cf.config.distributionId;
@@ -243,7 +241,7 @@ async function fetchConfigFromSecretsManager(evt) {
 			log.error(err);
 		}
 	}
-	const secret = await deps.sm.getSecretValue({ SecretId: secretId }); // eslint-disable-next-line no-buffer-constructor
+	const secret = await deps.sm.getSecretValue({ SecretId: secretId });
 	const buff = Buffer.from(JSON.parse(secret.SecretString).config, 'base64');
 	const decodedval = JSON.parse(buff.toString('utf-8'));
 	return decodedval;
@@ -253,14 +251,6 @@ async function fetchConfigFromSecretsManager(evt) {
 async function setConfig(event) {
 	if (config === undefined) {
 		config = await fetchConfigFromSecretsManager(event);
-	}
-
-	// set PKCE values if client_secret is not present in configurations
-	if (config.TOKEN_REQUEST.client_secret == undefined){
-		config.AUTH_REQUEST.code_challenge_method = "S256";
-		config.AUTH_REQUEST.code_challenge = pkceCodeChallenge;
-		config.AUTH_REQUEST.state = "state";
-		config.TOKEN_REQUEST.code_verifier = pkceCodeVerifier;
 	}
 }
 
@@ -285,36 +275,43 @@ async function setJwks() {
 }
 
 function generatePkceCodeVerifier(size = 43) {
-    return Crypto
-    .randomBytes(size)
-    .toString('hex')
-    .slice(0, size)
+	return Crypto
+		.randomBytes(size)
+		.toString('hex')
+		.slice(0, size);
 }
 
-function generatePkceCodeChallenge(codeVerifier){
-    var hash = Crypto.createHash('sha256').update(codeVerifier).digest();
-    return Base64Url.encode(hash);
-}
-
-// sets PKCE code verifier and code challenge values
-async function setPkceConfigs() {
-	if (pkceCodeChallenge == undefined || pkceCodeVerifier == undefined) {
-		pkceCodeVerifier = generatePkceCodeVerifier();
-		pkceCodeChallenge = generatePkceCodeChallenge(pkceCodeVerifier);
-	}
-	
+function generatePkceCodeChallenge(codeVerifier) {
+	var hash = Crypto.createHash('sha256').update(codeVerifier).digest();
+	return Base64Url.encode(hash);
 }
 
 // prepareConfigGlobals sets up all the lambda globals if they are not already set.
 async function prepareConfigGlobals(event) {
-	await setPkceConfigs();
 	await setConfig(event);
 	await setDiscoveryDocument();
 	await setJwks();
 }
 
+// validateRedirectState validates that the state/redirect target is a relative path
+// to prevent open redirect attacks (Finding #6).
+function validateRedirectState(state) {
+	if (!state || typeof state !== 'string') {
+		return '/';
+	}
+	// Only allow relative paths starting with /
+	// Block protocol-relative URLs (//evil.com), javascript:, data:, etc.
+	if (!state.startsWith('/') || state.startsWith('//')) {
+		return '/';
+	}
+	return state;
+}
+
 // getRedirectPayload gets the actual 302 redirect payload
 function getRedirectPayload({ evt, queryString, decodedToken, headers }) {
+	// Validate redirect target to prevent open redirect (Finding #6)
+	const redirectTarget = validateRedirectState(queryString.state);
+
 	const response = {
 		status: '302',
 		statusDescription: 'Found',
@@ -325,11 +322,11 @@ function getRedirectPayload({ evt, queryString, decodedToken, headers }) {
 					key: 'Location',
 					value:
 						evt.Records[0].cf.config.test !== undefined
-							? config.AUTH_REQUEST.redirect_uri + queryString.state
-							: queryString.state
+							? config.AUTH_REQUEST.redirect_uri + redirectTarget
+							: redirectTarget
 				}
 			],
-			'login': [ { key: 'login', value: decodedToken.payload.email } ],
+			'login': [{ key: 'login', value: decodedToken.payload.email }],
 			'set-cookie': [
 				{
 					key: 'Set-Cookie',
@@ -343,7 +340,10 @@ function getRedirectPayload({ evt, queryString, decodedToken, headers }) {
 						}),
 						{
 							path: '/',
-							maxAge: config.SESSION_DURATION
+							maxAge: config.SESSION_DURATION,
+							httpOnly: true,
+							secure: true,
+							sameSite: 'lax'
 						}
 					)
 				},
@@ -356,15 +356,28 @@ function getRedirectPayload({ evt, queryString, decodedToken, headers }) {
 				}
 			]
 		}
-	}; // log.info('setting cookie and redirecting', { response });
+	};
 	return response;
 }
 
 // redirect generates an appropriate redirect response.
+// Per-request nonce and PKCE values are computed locally — no shared state mutation (Findings #8, #9).
 function getOidcRedirectPayload(request) {
 	const { nonce, hash } = getNonceAndHash();
-	config.AUTH_REQUEST.nonce = nonce;
-	config.AUTH_REQUEST.state = request.uri; // Redirect to Authorization Server
+
+	// Build auth request params per-invocation to avoid mutating shared config (Findings #8, #9)
+	const authRequestParams = Object.assign({}, config.AUTH_REQUEST, {
+		nonce: nonce,
+		state: request.uri
+	});
+
+	// Set PKCE values per-request if client_secret is not present (Finding #2)
+	if (config.TOKEN_REQUEST.client_secret == undefined) {
+		const pkceCodeVerifier = generatePkceCodeVerifier();
+		const pkceCodeChallenge = generatePkceCodeChallenge(pkceCodeVerifier);
+		authRequestParams.code_challenge_method = 'S256';
+		authRequestParams.code_challenge = pkceCodeChallenge;
+	}
 
 	return {
 		status: '302',
@@ -375,7 +388,7 @@ function getOidcRedirectPayload(request) {
 				{
 					key: 'Location',
 					value: `${discoveryDocument.authorization_endpoint}?${QueryString.stringify(
-						config.AUTH_REQUEST
+						authRequestParams
 					)}`
 				}
 			],
@@ -391,7 +404,9 @@ function getOidcRedirectPayload(request) {
 					key: 'Set-Cookie',
 					value: Cookie.serialize('NONCE', hash, {
 						path: '/',
-						httpOnly: true
+						httpOnly: true,
+						secure: true,
+						sameSite: 'lax'
 					})
 				}
 			]
