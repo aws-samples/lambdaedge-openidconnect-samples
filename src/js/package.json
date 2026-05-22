@@ -22,6 +22,8 @@
 		"jwk-to-pem": "^2.0.7"
 	},
 	"devDependencies": {
-		"depcheck": "^1.4.7"
+		"assert": "^2.1.0",
+		"depcheck": "^1.4.7",
+		"mocha": "^11.7.6"
 	}
 }
