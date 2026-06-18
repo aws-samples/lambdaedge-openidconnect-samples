@@ -89,7 +89,7 @@ Resources:
                     Cookies:
                         Forward: none
               ViewerProtocolPolicy:
-                "allow-all"
+                "redirect-to-https"
     CloudFrontAuthFunction:
         Type: AWS::Serverless::Function
         Properties:
